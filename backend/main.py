@@ -22,9 +22,13 @@ from pipeline import ScientistState, scientist_pipeline
 
 app = FastAPI(title="AI Scientist API", version="1.0.0")
 
+_cors_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+_allowed_origins = [o.strip() for o in _cors_origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=_allowed_origins,
+    allow_origin_regex=r"https://.*\.railway\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
