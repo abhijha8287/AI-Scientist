@@ -1,123 +1,70 @@
 # AI Scientist
 
-An AI-powered research assistant that reads scientific papers, identifies knowledge gaps, generates novel hypotheses, and designs experiments — all automatically.
+A research assistant that reads papers or Wikipedia articles, finds gaps in the literature, proposes hypotheses and designs experiments to test them.
+
+## Why this exists
+An experiment in multi-step research automation: can a chain of LLM agents go from raw papers to testable ideas, while showing its reasoning so a person can check it?
 
 ## What it does
+- Takes uploaded PDFs, or a topic name whose Wikipedia article and up to 5 linked articles are fetched
+- Runs a 5-stage LangGraph pipeline:
+  1. Paper Reader: extracts and chunks text
+  2. Knowledge Extractor: pulls out concepts and relationships, creates embeddings
+  3. Gap Detector: finds under-explored areas
+  4. Hypothesis Generator: proposes testable hypotheses with novelty scores
+  5. Experiment Designer: designs an experiment for each hypothesis
+- Shows progress live, then hypotheses, a knowledge graph and experiments in the web UI
+- Lets you chat with the model about its reasoning
 
-Feed it research content — either by uploading PDFs or by typing a Wikipedia topic — and the system runs a 5-stage LangGraph pipeline:
+## Project structure
+```
+AI-Scientist/
+├── backend/
+│   ├── agents/         The five pipeline agents
+│   ├── pipeline.py     LangGraph workflow
+│   ├── embeddings.py   OpenAI embedding calls
+│   ├── db.py           SQLite storage
+│   ├── main.py         FastAPI app
+│   ├── Procfile, nixpacks.toml  Deployment config
+│   └── requirements.txt         Python dependencies
+├── frontend/
+│   ├── app/            Next.js pages
+│   ├── components/     UI components
+│   └── lib/            API client and helpers
+├── pdf/                Sample papers and generator script
+├── start.bat           One-command start (Windows)
+└── .env.example        Required settings
+```
 
-1. **Paper Reader** — extracts and chunks text from PDFs or Wikipedia articles
-2. **Knowledge Extractor** — pulls out concepts, relationships, and generates embeddings
-3. **Gap Detector** — identifies underexplored areas in the literature
-4. **Hypothesis Generator** — proposes testable hypotheses with novelty scores
-5. **Experiment Designer** — designs experiments for each hypothesis
-
-Results are viewable in a web UI, and you can chat with the AI to explore its reasoning.
-
-### Wikipedia ingestion
-
-Instead of uploading files, type any research topic in the **Fetch from Wikipedia** card on the home page. The app:
-
-1. Looks up the canonical Wikipedia article for the topic
-2. Fetches up to 5 related articles via internal links
-3. Saves them as text files and adds them to your paper list (shown with a globe icon)
-4. Lets you run the same pipeline on them immediately
-
-This makes it easy to explore any field without needing PDFs — just type "CRISPR", "transformer neural network", "quantum error correction", etc.
-
-## Tech stack
-
-| Layer | Tech |
-|---|---|
-| Backend | FastAPI + LangGraph + OpenAI |
-| PDF parsing | PyMuPDF |
-| Wikipedia | MediaWiki API (`w/api.php`) |
-| Embeddings | OpenAI `text-embedding-3-small` |
-| Database | SQLite (WAL mode) |
-| Frontend | Next.js 15, React 19, Tailwind CSS |
-| State | TanStack Query + Zustand |
-
-## Setup
-
-### Prerequisites
-
-- Python 3.11+
-- Node.js 18+
-- An OpenAI API key
-
-### 1. Configure environment
-
+## Getting started
+Requirements: Python 3.11+, Node.js 18+, an OpenAI API key.
 ```bash
-cp .env.example backend/.env
-```
+git clone https://github.com/abhijha8287/AI-Scientist.git
+cd AI-Scientist
+cp .env.example backend/.env                # set OPENAI_API_KEY
 
-Edit `backend/.env` and set your key:
-
-```
-OPENAI_API_KEY=sk-...
-```
-
-### 2. Start both servers
-
-**Windows (one command):**
-
-```bat
-start.bat
-```
-
-**Manual:**
-
-```bash
-# Terminal 1 — backend
-cd backend
+cd backend                                  # terminal 1
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 
-# Terminal 2 — frontend
-cd frontend
+cd frontend                                 # terminal 2
 npm install
-npm run dev
+npm run dev                                 # http://localhost:3000
 ```
+On Windows, `start.bat` starts both servers. Upload PDFs (samples are in `pdf/`) or fetch a Wikipedia topic, select the papers, then click **Run AI Scientist**.
 
-Open [http://localhost:3000](http://localhost:3000).
+## Configuration
+| Variable | Purpose |
+|:--|:--|
+| `OPENAI_API_KEY` | OpenAI API key |
+| `PIPELINE_MODEL` | Model for the reasoning stages |
+| `EXTRACTION_MODEL` | Model for knowledge extraction |
+| `EMBEDDING_MODEL` | Embedding model (default `text-embedding-3-small`) |
+| `DATABASE_URL` | SQLite database path |
+| `UPLOAD_DIR` | Where uploaded PDFs are stored |
 
-## Usage
-
-1. **Upload PDFs** — drag and drop PDF papers onto the home page, or
-   **Fetch from Wikipedia** — type a topic name and click "Fetch Articles"
-2. **Select** — check the papers you want to analyse (Wikipedia articles auto-select)
-3. **Run** — click "Run AI Scientist" to start the pipeline
-4. **Monitor** — watch the pipeline progress in real time
-5. **Explore** — browse hypotheses, knowledge graph, and designed experiments
-6. **Chat** — ask the AI to explain gaps, mechanisms, and reasoning
-
-## Project structure
-
-```
-.
-├── backend/
-│   ├── agents/
-│   │   ├── reader.py        # PDF → text chunks
-│   │   ├── extractor.py     # concepts & relationships
-│   │   ├── gap_detector.py  # research gap analysis
-│   │   ├── hypothesis.py    # hypothesis generation
-│   │   └── experiment.py    # experiment design
-│   ├── main.py              # FastAPI routes
-│   ├── pipeline.py          # LangGraph state machine
-│   ├── db.py                # SQLite schema & helpers
-│   ├── embeddings.py        # embed / cosine sim / novelty score
-│   └── requirements.txt
-├── frontend/
-│   ├── app/
-│   │   ├── page.tsx         # upload & paper selection
-│   │   ├── pipeline/[jobId] # live pipeline progress
-│   │   ├── hypotheses/      # results browser
-│   │   ├── knowledge/       # concept & relationship graph
-│   │   └── chat/            # conversational interface
-│   └── components/ui/       # shadcn-style UI primitives
-├── .env.example
-└── start.bat
-```
+## Tech stack
+Python, FastAPI, LangGraph, OpenAI API, PyMuPDF, MediaWiki API, SQLite, Next.js 15, React 19, Tailwind CSS, TanStack Query, Zustand
 
 ## API reference
 
